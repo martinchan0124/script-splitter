@@ -28,6 +28,7 @@ from .parser.location_classifier import classify_locations, resolve_effective_pe
 from .parser.visual_element_extractor import extract_visual_elements
 from .parser.period_resolver import resolve_effective_periods as resolve_periods
 from .validators.schema_validator import validate_records
+from .llm.washer import ScriptWasher
 from .exporters.output_package import export_output_package
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ def run_pipeline(
     stage: int = 3,
     use_llm: bool = True,
     use_nlp: bool = True,
+    use_wash: bool = False,
     output_dir: str | Path | None = None,
     progress: Callable[[str], None] | None = None,
     llm_cache_dir: str | Path | None = None,

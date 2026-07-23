@@ -13,6 +13,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--stage", type=int, default=3, choices=[1, 2, 3], help="Pipeline stage (1=scenes, 2=+entities, 3=+LLM)")
     p.add_argument("--no-llm", action="store_true", default=False, help="Skip all LLM calls")
     p.add_argument("--no-nlp", action="store_true", default=False, help="Skip spaCy NLP pre-scan")
+    p.add_argument("--wash", action="store_true", default=False, help="Enable LLM script washing")
     p.add_argument("--quiet", action="store_true", default=False, help="Suppress progress output")
     return parser
 
@@ -28,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.script_path),
                 stage=args.stage,
                 use_llm=not args.no_llm,
+                use_wash=args.wash,
                 use_nlp=not args.no_nlp,
                 output_dir=args.output,
                 progress=progress,
