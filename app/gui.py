@@ -1,5 +1,10 @@
 """Script Splitter GUI — for directors. Clean, native, no server."""
 import tkinter as tk
+try:
+    from app.rules_manager import RulesManager
+    _HAS_RULES = True
+except Exception:
+    _HAS_RULES = False
 from tkinter import ttk, filedialog, messagebox
 import subprocess, sys, os, json, threading, re
 from pathlib import Path
@@ -127,6 +132,7 @@ class App:
         top = ttk.Frame(self.win, padding=(20, 16, 20, 0))
         top.pack(fill="x")
         ttk.Label(top, text="Script Splitter ◬", font=("Helvetica", 20, "bold")).pack(side="left")
+        ttk.Button(top, text="📋 Rules", command=self.open_rules).pack(side="right", padx=(4, 4))
         ttk.Button(top, text="⚙", width=3, command=self.open_settings).pack(side="right")
         ttk.Label(top, text="Layout-aware screenplay parser", foreground="gray",
                   font=("Helvetica", 10)).pack(side="left", padx=(12, 0), pady=(6, 0))
@@ -191,6 +197,12 @@ class App:
         self.selected_path = path
         self.file_label.config(text=f"📄  {os.path.basename(path)}", foreground="#333")
         self.run_btn.config(state="normal")
+
+    def open_rules(self):
+        if _HAS_RULES:
+            RulesManager(self.win)
+        else:
+            messagebox.showerror("Error", "Rules manager requires PyYAML. Run: pip install pyyaml")
 
     def open_settings(self):
         SettingsDialog(self.win, self.cfg, self.on_settings_saved)
