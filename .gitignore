@@ -23,3 +23,9 @@ Thumbs.db
 # Testing
 .pytest_cache/
 .mypy_cache/
+
+# Generated
+output/
+.agents/
+.claude/
+*.code-workspace
