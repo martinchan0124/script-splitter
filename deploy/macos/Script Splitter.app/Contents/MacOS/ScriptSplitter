@@ -1,5 +1,5 @@
 #!/bin/bash
-DIR="$(cd "$(dirname "$0")/../../../.." && pwd)"
+DIR="/Users/martinchan/Documents/Work/2026SURF/Script Splitter"
 cd "$DIR"
 export PYTHONPATH="$DIR:$PYTHONPATH"
 python3 app/gui.py

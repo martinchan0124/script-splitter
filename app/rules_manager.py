@@ -47,7 +47,6 @@ class RulesManager:
         nb = ttk.Notebook(self.win, padding=4)
         nb.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        ttk.Label(nb).pack()  # placeholder
 
         # Tab 1: Simple list editor (reused for background pop & bit part chars)
         self._build_simple_tab(nb, "Background Pop.",
