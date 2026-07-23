@@ -2,4 +2,5 @@
 DIR="/Users/martinchan/Documents/Work/2026SURF/Script Splitter"
 cd "$DIR"
 export PYTHONPATH="$DIR:$PYTHONPATH"
-python3 app/gui.py
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+/Library/Frameworks/Python.framework/Versions/3.13/bin/python3 app/gui.py > /tmp/ss_app.log 2>&1

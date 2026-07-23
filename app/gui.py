@@ -200,7 +200,10 @@ class App:
 
     def open_rules(self):
         if _HAS_RULES:
-            RulesManager(self.win)
+            try:
+                RulesManager(self.win)
+            except Exception as e:
+                messagebox.showerror("Rules Manager Error", str(e))
         else:
             messagebox.showerror("Error", "Rules manager requires PyYAML. Run: pip install pyyaml")
 
