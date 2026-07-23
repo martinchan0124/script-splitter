@@ -291,20 +291,11 @@ class RulesManager:
         nb = ttk.Notebook(self.win, padding=4)
         nb.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        _simple_list_tab(nb, "background_population")
-        nb.tab(len(nb.tabs()) - 1, text="Background Pop.")
-
-        _simple_list_tab(nb, "bit_part_characters")
-        nb.tab(len(nb.tabs()) - 1, text="Bit Part Chars")
-
-        _struct_tab(nb, "visual_element_patterns")
-        nb.tab(len(nb.tabs()) - 1, text="Visual Elements")
-
-        _struct_tab(nb, "location_classes")
-        nb.tab(len(nb.tabs()) - 1, text="Location Classes")
-
-        _struct_tab(nb, "location_matchers")
-        nb.tab(len(nb.tabs()) - 1, text="Matchers")
+        nb.add(_simple_list_tab(nb, "background_population"), text="Background Pop.")
+        nb.add(_simple_list_tab(nb, "bit_part_characters"), text="Bit Part Chars")
+        nb.add(_struct_tab(nb, "visual_element_patterns"), text="Visual Elements")
+        nb.add(_struct_tab(nb, "location_classes"), text="Location Classes")
+        nb.add(_struct_tab(nb, "location_matchers"), text="Matchers")
 
         # Footer
         foot = ttk.Frame(self.win, padding=(10, 0, 10, 6))
