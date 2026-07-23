@@ -1,0 +1,15 @@
+ {
+   "active_ruleset_id": "SCRIPT_SPLITTER_RULESET_v0.1",
+   "description": "Location classification rules for Script Splitter",
+   "location_classes": [
+     {"location_class_id": "LC_INTERIOR_SINGLE_ROOM", "class_name": "interior single room", "ai3d_generation_class": "interior_single_room", "enabled": true, "default_workflow_profile_id": null, "supports_background_panorama": false, "requires_background_panorama_by_default": false, "requires_human_review": false},
+     {"location_class_id": "LC_INTERIOR_CONNECTED_ROOMS", "class_name": "interior connected rooms", "ai3d_generation_class": "interior_connected_rooms", "enabled": true, "default_workflow_profile_id": null, "supports_background_panorama": false, "requires_background_panorama_by_default": false, "requires_human_review": false},
+     {"location_class_id": "LC_OUTDOOR_SMALL_AREA_UNDER_10M", "class_name": "outdoor small area <10m", "ai3d_generation_class": "outdoor_small_area_under_10m", "enabled": true, "default_workflow_profile_id": null, "supports_background_panorama": false, "requires_background_panorama_by_default": false, "requires_human_review": false},
+     {"location_class_id": "LC_OUTDOOR_STREET_DEPTH_10_20M", "class_name": "outdoor street depth 10-20m", "ai3d_generation_class": "outdoor_street_depth_10_20m", "enabled": true, "default_workflow_profile_id": null, "supports_background_panorama": false, "requires_background_panorama_by_default": false, "requires_human_review": false},
+     {"location_class_id": "LC_VEHICLE_INTERIOR", "class_name": "vehicle interior", "ai3d_generation_class": "vehicle_interior", "enabled": true, "default_workflow_profile_id": null, "supports_background_panorama": false, "requires_background_panorama_by_default": false, "requires_human_review": false},
+     {"location_class_id": "LC_HYBRID_OR_UNCERTAIN", "class_name": "hybrid or uncertain", "ai3d_generation_class": "hybrid_or_uncertain", "enabled": true, "default_workflow_profile_id": null, "supports_background_panorama": false, "requires_background_panorama_by_default": false, "requires_human_review": true},
+     {"location_class_id": "LC_UNKNOWN", "class_name": "unknown", "ai3d_generation_class": "unknown", "enabled": true, "default_workflow_profile_id": null, "supports_background_panorama": false, "requires_background_panorama_by_default": false, "requires_human_review": true}
+   ],
+   "workflow_profiles": []
+ }
+ 
