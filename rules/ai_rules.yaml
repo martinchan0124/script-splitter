@@ -1,13 +1,135 @@
-# ═══════════════════════════════════════════════════════════════════════════
-# AI-Registered Rules — READ ONLY in the GUI
-# ═══════════════════════════════════════════════════════════════════════════
-# AI can APPEND new rules here via register_rule() API.
-# AI CANNOT delete or modify existing entries.
-# Human operators can view, approve, or reject these in the Rules Manager.
-# ═══════════════════════════════════════════════════════════════════════════
-
 location_classes: []
 location_matchers: []
-visual_element_patterns: []
+visual_element_patterns:
+- type: toy_or_model
+  triggers:
+  - train set
+  - model train
+  - toy train
+  verbs:
+  - switches on
+  - watches
+  - assembles
 background_population: []
 bit_part_characters: []
+VISUAL ELEMENT PATTERNS:
+- type: VE_PROP_PHOTOGRAPHY
+  name: camera
+  triggers:
+  - Argus C3
+  - camera
+  verbs:
+  - set on
+  - sits on
+- type: VE_PROP_PHOTOGRAPHY
+  name: photo paper
+  triggers:
+  - photo paper
+  verbs:
+  - stacked
+- type: VE_PROP_LIGHTING
+  name: light bulbs
+  triggers:
+  - red or amber light bulbs
+  verbs:
+  - collection of
+- type: VE_PROP_CAMERA
+  name: camera
+  triggers:
+  - camera
+  - Kodak
+  verbs:
+  - pulls out
+  - hands
+  - takes
+- type: VE_PROP_CLEANING
+  triggers:
+  - mop
+  - broom
+  - vacuum
+  verbs:
+  - mops
+  - sweeps
+  - vacuums
+- type: VE_PROP_SMOKING
+  triggers:
+  - cigarette
+  - ashtray
+  verbs:
+  - burns
+  - takes a drag
+- type: VE_PROP_VEHICLE
+  triggers:
+  - convertible
+  - car
+  - taxi
+  - truck
+  verbs:
+  - climbs into
+  - drives
+  - gets into
+  - gets out of
+- type: VE_PROP_VEHICLE_INTERIOR
+  name: dashboard
+  triggers:
+  - dashboard
+  - upholstery
+  - steering wheel
+  verbs:
+  - grip
+  - touch
+  - look at
+- type: VE_PROP_MUSIC
+  name: music
+  triggers:
+  - music
+  - song
+  - radio
+  verbs:
+  - play
+  - come on
+  - brood
+- type: VE_PROP_FOOD
+  name: cigarette
+  triggers:
+  - cigarette
+  verbs:
+  - smoking
+  - lights
+  - stubs
+visual_elements:
+- type: VE_VEHICLE_BICYCLE
+  triggers:
+  - bicycle
+  - bike
+  verbs:
+  - rides
+  - pedals
+VISUAL_ELEMENT_PATTERNS:
+- type: VE_PROP_PHOTOGRAPH
+  triggers:
+  - photo
+  - photograph
+  - picture
+  verbs:
+  - shows
+  - opens
+  - looks at
+- type: VE_PROP_TOY
+  triggers:
+  - doll
+  - train set
+  - toy
+  verbs:
+  - looks at
+  - points to
+  - buys
+- type: VE_PROP_PHOTOGRAPHIC
+  triggers:
+  - contact sheet
+  - magnifier
+  - camera
+  verbs:
+  - picks up
+  - looks through
+  - glances at

@@ -34,14 +34,18 @@ class ScriptWasher:
             self.cache = LlmCacheManager(cache_dir)
         self._rule_summary = _summarize_rules(rule_db)
 
-    def wash_script(self, scenes):
+    def wash_script(self, scenes, instance_db=None):
         results = []
         proposals = []
+        if instance_db:
+            self._instance_context = instance_db.get_context()
         for idx, scene in enumerate(scenes, start=1):
             logger.info(f"[washer] Scene {idx}/{len(scenes)} {scene.scene_id}")
             try:
                 result = self._wash_one(scene, idx, len(scenes))
                 results.append(result)
+                if instance_db:
+                    instance_db.update_from_wash(scene.scene_id, result)
                 for p in result.get("new_pattern_proposals", []):
                     proposals.append(p)
             except Exception as e:
@@ -91,8 +95,13 @@ Return JSON:
   "background_population": ["..."],
   "new_pattern_proposals": [{{"section":"...","suggestion":{{...}}}}]}}"""
 
+        ctx_str = ""
+        ctx = self._instance_context if hasattr(self, "_instance_context") else {}
+        if ctx.get("known_characters"):
+            ctx_str = f"\nKnown entities: {ctx.get('known_characters', [])}\n"
         user = f"""Scene {idx}/{total}
 
+{ctx_str}
 Heading: {scene.heading.raw}
 INT/EXT: {scene.heading.int_ext}
 Location: {scene.heading.primary_location_raw}
@@ -114,10 +123,28 @@ Text:
             "new_pattern_proposals": response.get("new_pattern_proposals", []),
         }
 
+    SECTION_ALIASES = {
+        "visual_element_patterns": ["visual_element_patterns", "visual elements", "visual_element_pattern",
+                                     "visual_elements", "visual element patterns",
+                                     "VISUAL_ELEMENT_PATTERNS", "VISUAL ELEMENT PATTERNS"],
+        "location_classes": ["location_classes", "location class", "LOCATION CLASSES"],
+        "location_matchers": ["location_matchers", "location matcher", "LOCATION MATCHERS"],
+        "background_population": ["background_population", "background population", "BACKGROUND POPULATION"],
+        "bit_part_characters": ["bit_part_characters", "bit part characters", "BIT PART CHARACTERS"],
+    }
+
+    @staticmethod
+    def _normalize_section(raw):
+        raw_lower = raw.lower().replace(" ", "_")
+        for canonical, aliases in ScriptWasher.SECTION_ALIASES.items():
+            if raw_lower in [a.lower().replace(" ", "_") for a in aliases] or raw_lower == canonical:
+                return canonical
+        return raw
+
     def _register_proposals(self, proposals):
         reg = 0
         for prop in proposals:
-            section = prop.get("section")
+            section = self._normalize_section(prop.get("section", ""))
             sug = prop.get("suggestion")
             if section and sug:
                 try:

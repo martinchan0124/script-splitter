@@ -141,6 +141,27 @@ def run_pipeline(
         validate_records(result.global_characters)
         validate_records(result.global_location_assets)
 
+        # Stage 2.5: LLM Script Wash
+        if use_wash and use_llm and stage >= 2:
+            _log(progress, "[stage2.5] LLM Script Washer")
+            try:
+                from .llm.deepseek_client import DeepSeekClient
+                from .rules_db import RuleDB
+                client = DeepSeekClient.from_env()
+                washer = ScriptWasher(RuleDB(), client,
+                    cache_dir=Path(output_dir) / "llm_cache" / "washer" if output_dir else None)
+                from .instance_db import InstanceDB
+                idb = InstanceDB()
+                wres = washer.wash_script(result.scenes, instance_db=idb)
+                result.report.warnings.append(f"washer_processed:{len(wres)}_scenes")
+                _log(progress, f"[stage2.5] Washed {len(wres)} scenes")
+                idb.write(str(Path(output_dir) / "instance_db.json"))
+                _log(progress, f"[stage2.5] Instance DB: {len(idb.characters)} chars")
+                idb.write(Path(output_dir) / "instance_db.json")
+            except Exception as exc:
+                _log(progress, f"[stage2.5] Washer unavailable ({exc.__class__.__name__})")
+                result.report.warnings.append(f"washer_unavailable:{exc.__class__.__name__}")
+
         # Stage 2 LLM enhancement (optional)
         if stage >= 3 and use_llm:
             _log(progress, "[stage2-llm] Initializing semantic router")
