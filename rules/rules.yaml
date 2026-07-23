@@ -1,392 +1,699 @@
-# ═══════════════════════════════════════════════════════════════════════════
-# Script Splitter — Rules Database
-# ═══════════════════════════════════════════════════════════════════════════
-# This file is the single source of truth for all rule-based entity
-# classification. To add a new rule, just add an item under the
-# appropriate array. No code changes needed.
-#
-# Schema version: 1.0
-# File format: YAML (human-readable, git-diff friendly)
-# ═══════════════════════════════════════════════════════════════════════════
-
-version: "1.0"
-
-# ── Location Classes ────────────────────────────────────────────────────
-# Each class maps to a 3D pipeline generation profile.
-# The class_id is used throughout the pipeline output.
-
+version: '1.0'
 location_classes:
-  - class_id: "LC_INTERIOR_SINGLE_ROOM"
-    class_name: "interior single room"
-    generation_class: "interior_single_room"
-    description: >
-      INT. 开头，单一房间，无复杂连接。
-      例: INT. OFFICE - DAY, INT. BEDROOM - NIGHT
-    supports_background_panorama: false
-    requires_background_panorama: false
-    requires_human_review: false
+- class_id: LC_INTERIOR_SINGLE_ROOM
+  class_name: interior single room
+  generation_class: interior_single_room
+  description: 'INT. 开头，单一房间，无复杂连接。 例: INT. OFFICE - DAY, INT. BEDROOM - NIGHT
 
-  - class_id: "LC_INTERIOR_CONNECTED_ROOMS"
-    class_name: "interior connected rooms"
-    generation_class: "interior_connected_rooms"
-    description: >
-      INT. 开头，heading 含多个地点 chunk
-      （逗号/斜杠/句点分隔）。
-      例: INT. LIVING ROOM / KITCHEN - DAY
-    supports_background_panorama: false
-    requires_background_panorama: false
-    requires_human_review: false
+    '
+  supports_background_panorama: false
+  requires_background_panorama: false
+  requires_human_review: false
+- class_id: LC_INTERIOR_CONNECTED_ROOMS
+  class_name: interior connected rooms
+  generation_class: interior_connected_rooms
+  description: 'INT. 开头，heading 含多个地点 chunk （逗号/斜杠/句点分隔）。 例: INT. LIVING ROOM / KITCHEN
+    - DAY
 
-  - class_id: "LC_VEHICLE_INTERIOR"
-    class_name: "vehicle interior"
-    generation_class: "vehicle_interior"
-    description: >
-      INT. 开头，地点含载具关键词。
-      例: INT. TAXI - NIGHT, INT. SUBMARINE - DAY
-    supports_background_panorama: false
-    requires_background_panorama: false
-    requires_human_review: false
+    '
+  supports_background_panorama: false
+  requires_background_panorama: false
+  requires_human_review: false
+- class_id: LC_VEHICLE_INTERIOR
+  class_name: vehicle interior
+  generation_class: vehicle_interior
+  description: 'INT. 开头，地点含载具关键词。 例: INT. TAXI - NIGHT, INT. SUBMARINE - DAY
 
-  - class_id: "LC_VEHICLE_ON_ROAD"
-    class_name: "vehicle on road"
-    generation_class: "vehicle_on_road_scene"
-    description: >
-      EXT./INT. 混合或 INT. 含背景上下文，
-      载具是"外部视角"而非内部。
-      例: EXT./INT. MIR ONE - DEEP OCEAN
-    supports_background_panorama: true
-    requires_background_panorama: true
-    requires_human_review: false
+    '
+  supports_background_panorama: false
+  requires_background_panorama: false
+  requires_human_review: false
+- class_id: LC_VEHICLE_ON_ROAD
+  class_name: vehicle on road
+  generation_class: vehicle_on_road_scene
+  description: 'EXT./INT. 混合或 INT. 含背景上下文， 载具是"外部视角"而非内部。 例: EXT./INT. MIR ONE - DEEP
+    OCEAN
 
-  - class_id: "LC_OUTDOOR_SMALL_AREA"
-    class_name: "outdoor small area (<10m)"
-    generation_class: "outdoor_small_area_under_10m"
-    description: >
-      EXT. 开头，无街道/大路/开阔自然关键词，
-      默认视为小区域。例: EXT. BACKYARD - DAY
-    supports_background_panorama: false
-    requires_background_panorama: false
-    requires_human_review: false
+    '
+  supports_background_panorama: true
+  requires_background_panorama: true
+  requires_human_review: false
+- class_id: LC_OUTDOOR_SMALL_AREA
+  class_name: outdoor small area (<10m)
+  generation_class: outdoor_small_area_under_10m
+  description: 'EXT. 开头，无街道/大路/开阔自然关键词， 默认视为小区域。例: EXT. BACKYARD - DAY
 
-  - class_id: "LC_OUTDOOR_STREET"
-    class_name: "outdoor street depth (10-20m)"
-    generation_class: "outdoor_street_depth_10_20m"
-    description: >
-      EXT. 开头，含道路/车站关键词。
-      例: EXT. MAIN STREET - NIGHT
-    supports_background_panorama: true
-    requires_background_panorama: false
-    requires_human_review: false
+    '
+  supports_background_panorama: false
+  requires_background_panorama: false
+  requires_human_review: false
+- class_id: LC_OUTDOOR_STREET
+  class_name: outdoor street depth (10-20m)
+  generation_class: outdoor_street_depth_10_20m
+  description: 'EXT. 开头，含道路/车站关键词。 例: EXT. MAIN STREET - NIGHT
 
-  - class_id: "LC_OUTDOOR_LARGE"
-    class_name: "outdoor large environment (20m+)"
-    generation_class: "outdoor_large_environment"
-    description: >
-      EXT. 开头，含自然/开阔关键词
-      （OCEAN, DESERT, FOREST, MOUNTAIN 等）。
-      例: EXT. THE BOTTOM OF THE SEA - NIGHT
-    supports_background_panorama: true
-    requires_background_panorama: true
-    requires_human_review: false
+    '
+  supports_background_panorama: true
+  requires_background_panorama: false
+  requires_human_review: false
+- class_id: LC_OUTDOOR_LARGE
+  class_name: outdoor large environment (20m+)
+  generation_class: outdoor_large_environment
+  description: 'EXT. 开头，含自然/开阔关键词 （OCEAN, DESERT, FOREST, MOUNTAIN 等）。 例: EXT. THE
+    BOTTOM OF THE SEA - NIGHT
 
-  - class_id: "LC_HYBRID_OR_UNCERTAIN"
-    class_name: "hybrid or uncertain"
-    generation_class: "hybrid_or_uncertain"
-    description: "EXT./INT. 混合，或无法确定的空间"
-    supports_background_panorama: false
-    requires_background_panorama: false
-    requires_human_review: true
-
-  - class_id: "LC_UNKNOWN"
-    class_name: "unknown"
-    generation_class: "unknown"
-    description: "无法匹配任何规则"
-    supports_background_panorama: false
-    requires_background_panorama: false
-    requires_human_review: true
-
-# ── Location Matchers ───────────────────────────────────────────────────
-# priority: higher number = checked first. First match wins.
-# int_ext: "INT" | "EXT" | "BOTH" | null (if null, any)
-# keywords_any: if ANY keyword appears in the heading → match
-
+    '
+  supports_background_panorama: true
+  requires_background_panorama: true
+  requires_human_review: false
+- class_id: LC_HYBRID_OR_UNCERTAIN
+  class_name: hybrid or uncertain
+  generation_class: hybrid_or_uncertain
+  description: EXT./INT. 混合，或无法确定的空间
+  supports_background_panorama: false
+  requires_background_panorama: false
+  requires_human_review: true
+- class_id: LC_UNKNOWN
+  class_name: unknown
+  generation_class: unknown
+  description: 无法匹配任何规则
+  supports_background_panorama: false
+  requires_background_panorama: false
+  requires_human_review: true
 location_matchers:
-  - rule_id: "LOC_VEHICLE_INTERIOR"
-    priority: 90
-    int_ext: "INT"
-    keywords_any:
-      - TAXI; CAR; TRUCK; VAN; BUS
-      - AMBULANCE; POLICE CAR; JEEP
-      - BOAT; SHIP; SUBMARINE; PLANE; HELICOPTER
-      - TRAIN; SUBWAY; ELEVATOR; COCKPIT; CABIN
-      - MIR ONE; MIR TWO; MIR 1; MIR 2
-    result_class: "LC_VEHICLE_INTERIOR"
-    confidence: 0.86
-    note: "INT. + 载具关键词 → 载具内部"
-
-  - rule_id: "LOC_VEHICLE_ON_ROAD"
-    priority: 85
-    int_ext: "BOTH"
-    keywords_any:
-      - TAXI; CAR; TRUCK; VAN; BUS; SUBMARINE
-      - BOAT; SHIP; PLANE; HELICOPTER; TRAIN
-    result_class: "LC_VEHICLE_ON_ROAD"
-    confidence: 0.90
-    note: "EXT./INT. + 载具 → 车外视角"
-
-  - rule_id: "LOC_LARGE_ENVIRONMENT"
-    priority: 70
-    int_ext: "EXT"
-    keywords_any:
-      - OCEAN; SEA; DESERT; FOREST; MOUNTAIN
-      - SKY; HORIZON; VALLEY; BEACH; RIVER
-      - LAKE; FIELD; MEADOW; JUNGLE; SWAMP
-      - CANYON; CLIFF; BAY; HARBOR; GULF
-      - PLAINS; TUNDRA; GLACIER; PARK
-      - WOODS; JUNGLE; REEF; BOTTOM OF THE SEA
-    result_class: "LC_OUTDOOR_LARGE"
-    confidence: 0.82
-    note: "EXT. + 大自然关键词 → 开阔大型空间"
-
-  - rule_id: "LOC_OUTDOOR_STREET"
-    priority: 65
-    int_ext: "EXT"
-    keywords_any:
-      - STREET; AVENUE; ROAD; STATION
-      - BOULEVARD; PLAZA; SQUARE; ALLEY
-      - LANE; DRIVE; HIGHWAY; FREEWAY
-      - BRIDGE; CROSSWALK; INTERSECTION
-    result_class: "LC_OUTDOOR_STREET"
-    confidence: 0.80
-    note: "EXT. + 道路关键词 → 街景"
-
-  - rule_id: "LOC_INTERIOR_CONNECTED"
-    priority: 60
-    int_ext: "INT"
-    has_dot_or_slash: true
-    result_class: "LC_INTERIOR_CONNECTED_ROOMS"
-    confidence: 0.76
-    note: "INT. + heading 含 '.' 或 '/' → 连接房间"
-
-  - rule_id: "LOC_INTERIOR_SINGLE"
-    priority: 50
-    int_ext: "INT"
-    result_class: "LC_INTERIOR_SINGLE_ROOM"
-    confidence: 0.82
-    note: "INT. 默认回退 → 单一房间"
-
-  - rule_id: "LOC_OUTDOOR_SMALL"
-    priority: 40
-    int_ext: "EXT"
-    result_class: "LC_OUTDOOR_SMALL_AREA"
-    confidence: 0.72
-    note: "EXT. 默认回退 → 小区域"
-
-  - rule_id: "LOC_HYBRID"
-    priority: 30
-    int_ext: "BOTH"
-    result_class: "LC_HYBRID_OR_UNCERTAIN"
-    confidence: 0.55
-    note: "EXT./INT. 混合 → 人工复核"
-
-# ── Visual Element Patterns ─────────────────────────────────────────────
-# Trigger patterns are matched against action text lines.
-# If a trigger keyword is found, a visual element instance is created.
-# Interaction verbs determine prop interaction records.
-#
-# Type: type of visual element (maps to schema visual_element_type)
-# trigger_words: ACTION text contains ANY of these → create element
-# interaction_verbs: character performs this verb on the element → create prop_interaction
-
+- rule_id: LOC_VEHICLE_INTERIOR
+  priority: 90
+  int_ext: INT
+  keywords_any:
+  - TAXI
+  - CAR
+  - TRUCK
+  - VAN
+  - BUS
+  - AMBULANCE
+  - POLICE CAR
+  - JEEP
+  - BOAT
+  - SHIP
+  - SUBMARINE
+  - PLANE
+  - HELICOPTER
+  - TRAIN
+  - SUBWAY
+  - ELEVATOR
+  - COCKPIT
+  - CABIN
+  - MIR ONE
+  - MIR TWO
+  - MIR 1
+  - MIR 2
+  result_class: LC_VEHICLE_INTERIOR
+  confidence: 0.86
+  note: INT. + 载具关键词 → 载具内部
+- rule_id: LOC_VEHICLE_ON_ROAD
+  priority: 85
+  int_ext: BOTH
+  keywords_any:
+  - TAXI
+  - CAR
+  - TRUCK
+  - VAN
+  - BUS
+  - SUBMARINE
+  - BOAT
+  - SHIP
+  - PLANE
+  - HELICOPTER
+  - TRAIN
+  result_class: LC_VEHICLE_ON_ROAD
+  confidence: 0.9
+  note: EXT./INT. + 载具 → 车外视角
+- rule_id: LOC_LARGE_ENVIRONMENT
+  priority: 70
+  int_ext: EXT
+  keywords_any:
+  - OCEAN
+  - SEA
+  - DESERT
+  - FOREST
+  - MOUNTAIN
+  - SKY
+  - HORIZON
+  - VALLEY
+  - BEACH
+  - RIVER
+  - LAKE
+  - FIELD
+  - MEADOW
+  - JUNGLE
+  - SWAMP
+  - CANYON
+  - CLIFF
+  - BAY
+  - HARBOR
+  - GULF
+  - PLAINS
+  - TUNDRA
+  - GLACIER
+  - PARK
+  - WOODS
+  - JUNGLE
+  - REEF
+  - BOTTOM OF THE SEA
+  result_class: LC_OUTDOOR_LARGE
+  confidence: 0.82
+  note: EXT. + 大自然关键词 → 开阔大型空间
+- rule_id: LOC_OUTDOOR_STREET
+  priority: 65
+  int_ext: EXT
+  keywords_any:
+  - STREET
+  - AVENUE
+  - ROAD
+  - STATION
+  - BOULEVARD
+  - PLAZA
+  - SQUARE
+  - ALLEY
+  - LANE
+  - DRIVE
+  - HIGHWAY
+  - FREEWAY
+  - BRIDGE
+  - CROSSWALK
+  - INTERSECTION
+  result_class: LC_OUTDOOR_STREET
+  confidence: 0.8
+  note: EXT. + 道路关键词 → 街景
+- rule_id: LOC_INTERIOR_CONNECTED
+  priority: 60
+  int_ext: INT
+  has_dot_or_slash: true
+  result_class: LC_INTERIOR_CONNECTED_ROOMS
+  confidence: 0.76
+  note: INT. + heading 含 '.' 或 '/' → 连接房间
+- rule_id: LOC_INTERIOR_SINGLE
+  priority: 50
+  int_ext: INT
+  result_class: LC_INTERIOR_SINGLE_ROOM
+  confidence: 0.82
+  note: INT. 默认回退 → 单一房间
+- rule_id: LOC_OUTDOOR_SMALL
+  priority: 40
+  int_ext: EXT
+  result_class: LC_OUTDOOR_SMALL_AREA
+  confidence: 0.72
+  note: EXT. 默认回退 → 小区域
+- rule_id: LOC_HYBRID
+  priority: 30
+  int_ext: BOTH
+  result_class: LC_HYBRID_OR_UNCERTAIN
+  confidence: 0.55
+  note: EXT./INT. 混合 → 人工复核
 visual_element_patterns:
-  # ── Weapons ──
-  - id: "VE_WEAPON_FIREARM"
-    type: "weapon_or_dangerous_object"
-    description: "所有手持火器"
-    trigger_words:
-      - pistol; gun; revolver; handgun
-      - shotgun; rifle; machine gun
-      - submachine gun; automatic weapon
-      - semi-automatic; sidearm; weapon
-    interaction_verbs:
-      - draw; point; hold; aim; fire; shoot
-      - load; reload; holster; lower; raise
-      - brandish; drop; pick up; hand
-
-  - id: "VE_WEAPON_BLADE"
-    type: "weapon_or_dangerous_object"
-    description: "冷兵器/刀具"
-    trigger_words:
-      - knife; blade; sword; dagger; machete
-      - bayonet; scalpel; razor; katana
-      - sabre; cutlass
-    interaction_verbs:
-      - draw; hold; raise; swing; stab
-      - brandish; point; drop; wipe; clean
-
-  - id: "VE_WEAPON_MELEE"
-    type: "weapon_or_dangerous_object"
-    description: "钝器/冲击武器"
-    trigger_words:
-      - bat; crowbar; hammer; axe; chainsaw
-      - baseball bat; club; tire iron; wrench
-      - pipe; pole; stick; shovel; pickaxe
-    interaction_verbs:
-      - hold; raise; swing; brandish; drop
-      - pick up; carry; drag
-
-  - id: "VE_WEAPON_EXPLOSIVE"
-    type: "weapon_or_dangerous_object"
-    description: "爆炸物"
-    trigger_words:
-      - bomb; grenade; explosive; dynamite; TNT
-      - land mine; rocket launcher; molotov
-      - C4; detonator; charge; fuse
-    interaction_verbs:
-      - hold; raise; throw; drop; plant
-      - arm; disarm; detonate; light; kick
-
-  # ── Costume & Accessories ──
-  - id: "VE_ACCESSORY_SYMBOLIC"
-    type: "symbolic_object"
-    description: "具有叙事意义的配饰/物品"
-    trigger_words:
-      - wedding ring; engagement ring; necklace
-      - pendant; locket; brooch; cameo; tiara
-      - crown; medal; badge; mask; veil
-      - green silk scarf; red dress; fur coat
-      - uniform; costume; habit; robe; gown
-    interaction_verbs:
-      - wears; puts on; removes; adjust
-      - shows; holds up; drops; loses; finds
-
-  - id: "VE_ACCESSORY_CLOTHING"
-    type: "clothing_detail"
-    description: "一般衣物/鞋帽配饰"
-    trigger_words:
-      - coat; jacket; hat; cap; scarf; gloves
-      - sunglasses; eyeglasses; spectacles; tie
-      - bow tie; belt; suspenders; boots; shoes
-      - slippers; apron; hood; helmet; goggles
-    interaction_verbs:
-      - wears; puts on; removes; adjusts
-      - takes off; buttons; unbuttons; zips
-      - ties; unties; folds; hangs; drops
-
-  # ── Props ──
-  - id: "VE_PROP_CONTAINER"
-    type: "container"
-    description: "容器/包裹"
-    trigger_words:
-      - briefcase; suitcase; bag; backpack
-      - purse; wallet; box; crate; barrel
-      - bucket; basket; envelope; package
-      - parcel; luggage; chest; trunk; case
-    interaction_verbs:
-      - carries; holds; opens; closes; sets down
-      - picks up; drops; hands; tosses; places
-      - retrieves; searches; packs; unpacks
-
-  - id: "VE_PROP_COMMUNICATION"
-    type: "communication_device"
-    description: "通讯设备"
-    trigger_words:
-      - telephone; phone; cell phone; mobile
-      - smartphone; satellite phone; walkie-talkie
-      - radio; two-way radio; pager; intercom
-      - telegraph; teletype
-    interaction_verbs:
-      - answers; dials; hangs up; speaks into
-      - listens; holds; drops; throws; checks
-      - pockets; turns off; turns on; charges
-
-  - id: "VE_PROP_DOCUMENT"
-    type: "document"
-    description: "文件/纸张/书籍"
-    trigger_words:
-      - letter; note; paper; newspaper; magazine
-      - book; photograph; photo; map; diagram
-      - blueprint; file; folder; document; contract
-      - ticket; receipt; bill; check; menu; pamphlet
-    interaction_verbs:
-      - reads; writes; signs; folds; unfolds
-      - hands; shows; points at; tosses
-      - tears; burns; hides; places; pockets
-
-  - id: "VE_PROP_FOOD"
-    type: "food_or_drink"
-    description: "食物/饮品/吸烟"
-    trigger_words:
-      - glass; cup; mug; bottle; drink; scotch
-      - whiskey; wine; beer; champagne; coffee; tea
-      - cigarette; cigar; food; plate; bowl
-      - fork; spoon; knife (table); napkin; tray
-    interaction_verbs:
-      - drinks; sips; gulps; pours; lights
-      - stubs out; holds; sets down; picks up
-      - offers; accepts; raises; toasts; smokes
-
-  - id: "VE_PROP_FURNITURE"
-    type: "furniture"
-    description: "大型家具/装置"
-    trigger_words:
-      - chair; table; desk; bed; sofa; couch
-      - bench; stool; counter; shelf; cabinet
-      - wardrobe; dresser; nightstand; lamp
-      - piano; organ; fireplace; bathtub; sink
-    interaction_verbs:
-      - sits; stands; lies; leans; climbs
-      - pushes; pulls; moves; drags; sits on
-
-  # ── Equipment ──
-  - id: "VE_EQUIPMENT_HOLSTER"
-    type: "equipment_mount"
-    description: "枪套/武器携带装备"
-    trigger_words:
-      - holster; shoulder holster; belt holster
-      - ankle holster; gun belt; bandolier
-      - scabbard; sheath; sling
-    interaction_verbs: []
-    note: "Equipment is passive, no interaction verb needed"
-
-  - id: "VE_EQUIPMENT_CARRIER"
-    type: "carrier_gear"
-    description: "携带/背负装备"
-    trigger_words:
-      - harness; strap; belt; pouch; tactical vest
-      - life vest; parachute; oxygen tank; tank
-      - helmet with; night vision; headset; earpiece
-    interaction_verbs:
-      - puts on; takes off; adjusts; straps; buckles
-
-# ── Background Population ───────────────────────────────────────────────
-# Text in action lines matching these labels creates background population
-# entries instead of character instances.
-
+- id: VE_WEAPON_FIREARM
+  type: weapon_or_dangerous_object
+  description: 所有手持火器
+  trigger_words:
+  - pistol
+  - gun
+  - revolver
+  - handgun
+  - shotgun
+  - rifle
+  - machine gun
+  - submachine gun
+  - automatic weapon
+  - semi-automatic
+  - sidearm
+  - weapon
+  interaction_verbs:
+  - draw
+  - point
+  - hold
+  - aim
+  - fire
+  - shoot
+  - load
+  - reload
+  - holster
+  - lower
+  - raise
+  - brandish
+  - drop
+  - pick up
+  - hand
+- id: VE_WEAPON_BLADE
+  type: weapon_or_dangerous_object
+  description: 冷兵器/刀具
+  trigger_words:
+  - knife
+  - blade
+  - sword
+  - dagger
+  - machete
+  - bayonet
+  - scalpel
+  - razor
+  - katana
+  - sabre
+  - cutlass
+  interaction_verbs:
+  - draw
+  - hold
+  - raise
+  - swing
+  - stab
+  - brandish
+  - point
+  - drop
+  - wipe
+  - clean
+- id: VE_WEAPON_MELEE
+  type: weapon_or_dangerous_object
+  description: 钝器/冲击武器
+  trigger_words:
+  - bat
+  - crowbar
+  - hammer
+  - axe
+  - chainsaw
+  - baseball bat
+  - club
+  - tire iron
+  - wrench
+  - pipe
+  - pole
+  - stick
+  - shovel
+  - pickaxe
+  interaction_verbs:
+  - hold
+  - raise
+  - swing
+  - brandish
+  - drop
+  - pick up
+  - carry
+  - drag
+- id: VE_WEAPON_EXPLOSIVE
+  type: weapon_or_dangerous_object
+  description: 爆炸物
+  trigger_words:
+  - bomb
+  - grenade
+  - explosive
+  - dynamite
+  - TNT
+  - land mine
+  - rocket launcher
+  - molotov
+  - C4
+  - detonator
+  - charge
+  - fuse
+  interaction_verbs:
+  - hold
+  - raise
+  - throw
+  - drop
+  - plant
+  - arm
+  - disarm
+  - detonate
+  - light
+  - kick
+- id: VE_ACCESSORY_SYMBOLIC
+  type: symbolic_object
+  description: 具有叙事意义的配饰/物品
+  trigger_words:
+  - wedding ring
+  - engagement ring
+  - necklace
+  - pendant
+  - locket
+  - brooch
+  - cameo
+  - tiara
+  - crown
+  - medal
+  - badge
+  - mask
+  - veil
+  - green silk scarf
+  - red dress
+  - fur coat
+  - uniform
+  - costume
+  - habit
+  - robe
+  - gown
+  interaction_verbs:
+  - wears
+  - puts on
+  - removes
+  - adjust
+  - shows
+  - holds up
+  - drops
+  - loses
+  - finds
+- id: VE_ACCESSORY_CLOTHING
+  type: clothing_detail
+  description: 一般衣物/鞋帽配饰
+  trigger_words:
+  - coat
+  - jacket
+  - hat
+  - cap
+  - scarf
+  - gloves
+  - sunglasses
+  - eyeglasses
+  - spectacles
+  - tie
+  - bow tie
+  - belt
+  - suspenders
+  - boots
+  - shoes
+  - slippers
+  - apron
+  - hood
+  - helmet
+  - goggles
+  interaction_verbs:
+  - wears
+  - puts on
+  - removes
+  - adjusts
+  - takes off
+  - buttons
+  - unbuttons
+  - zips
+  - ties
+  - unties
+  - folds
+  - hangs
+  - drops
+- id: VE_PROP_CONTAINER
+  type: container
+  description: 容器/包裹
+  trigger_words:
+  - briefcase
+  - suitcase
+  - bag
+  - backpack
+  - purse
+  - wallet
+  - box
+  - crate
+  - barrel
+  - bucket
+  - basket
+  - envelope
+  - package
+  - parcel
+  - luggage
+  - chest
+  - trunk
+  - case
+  interaction_verbs:
+  - carries
+  - holds
+  - opens
+  - closes
+  - sets down
+  - picks up
+  - drops
+  - hands
+  - tosses
+  - places
+  - retrieves
+  - searches
+  - packs
+  - unpacks
+- id: VE_PROP_COMMUNICATION
+  type: communication_device
+  description: 通讯设备
+  trigger_words:
+  - telephone
+  - phone
+  - cell phone
+  - mobile
+  - smartphone
+  - satellite phone
+  - walkie-talkie
+  - radio
+  - two-way radio
+  - pager
+  - intercom
+  - telegraph
+  - teletype
+  interaction_verbs:
+  - answers
+  - dials
+  - hangs up
+  - speaks into
+  - listens
+  - holds
+  - drops
+  - throws
+  - checks
+  - pockets
+  - turns off
+  - turns on
+  - charges
+- id: VE_PROP_DOCUMENT
+  type: document
+  description: 文件/纸张/书籍
+  trigger_words:
+  - letter
+  - note
+  - paper
+  - newspaper
+  - magazine
+  - book
+  - photograph
+  - photo
+  - map
+  - diagram
+  - blueprint
+  - file
+  - folder
+  - document
+  - contract
+  - ticket
+  - receipt
+  - bill
+  - check
+  - menu
+  - pamphlet
+  interaction_verbs:
+  - reads
+  - writes
+  - signs
+  - folds
+  - unfolds
+  - hands
+  - shows
+  - points at
+  - tosses
+  - tears
+  - burns
+  - hides
+  - places
+  - pockets
+- id: VE_PROP_FOOD
+  type: food_or_drink
+  description: 食物/饮品/吸烟
+  trigger_words:
+  - glass
+  - cup
+  - mug
+  - bottle
+  - drink
+  - scotch
+  - whiskey
+  - wine
+  - beer
+  - champagne
+  - coffee
+  - tea
+  - cigarette
+  - cigar
+  - food
+  - plate
+  - bowl
+  - fork
+  - spoon
+  - knife (table)
+  - napkin
+  - tray
+  interaction_verbs:
+  - drinks
+  - sips
+  - gulps
+  - pours
+  - lights
+  - stubs out
+  - holds
+  - sets down
+  - picks up
+  - offers
+  - accepts
+  - raises
+  - toasts
+  - smokes
+- id: VE_PROP_FURNITURE
+  type: furniture
+  description: 大型家具/装置
+  trigger_words:
+  - chair
+  - table
+  - desk
+  - bed
+  - sofa
+  - couch
+  - bench
+  - stool
+  - counter
+  - shelf
+  - cabinet
+  - wardrobe
+  - dresser
+  - nightstand
+  - lamp
+  - piano
+  - organ
+  - fireplace
+  - bathtub
+  - sink
+  interaction_verbs:
+  - sits
+  - stands
+  - lies
+  - leans
+  - climbs
+  - pushes
+  - pulls
+  - moves
+  - drags
+  - sits on
+- id: VE_EQUIPMENT_HOLSTER
+  type: equipment_mount
+  description: 枪套/武器携带装备
+  trigger_words:
+  - holster
+  - shoulder holster
+  - belt holster
+  - ankle holster
+  - gun belt
+  - bandolier
+  - scabbard
+  - sheath
+  - sling
+  interaction_verbs: []
+  note: Equipment is passive, no interaction verb needed
+- id: VE_EQUIPMENT_CARRIER
+  type: carrier_gear
+  description: 携带/背负装备
+  trigger_words:
+  - harness
+  - strap
+  - belt
+  - pouch
+  - tactical vest
+  - life vest
+  - parachute
+  - oxygen tank
+  - tank
+  - helmet with
+  - night vision
+  - headset
+  - earpiece
+  interaction_verbs:
+  - puts on
+  - takes off
+  - adjusts
+  - straps
+  - buckles
 background_population:
-  - COMMUTERS; BUSINESSMEN; BUSINESSWOMEN
-  - CROWD; CROWDS; EXTRAS; PEDESTRIANS
-  - TOURISTS; PASSENGERS; SHOPPERS; STUDENTS
-  - SOLDIERS; SAILORS; POLICE; OFFICERS; GUARDS
-  - MUSICIANS; BAND; ORCHESTRA; DANCERS
-  - WAITERS; STAFF; WORKERS; EMPLOYEES
-  - VOLUNTEERS; PROTESTERS; DEMONSTRATORS
-  - REPORTERS; PHOTOGRAPHERS; FANS; SPECTATORS; AUDIENCE
-
-# ── Bit Part Characters ─────────────────────────────────────────────────
-# Character names matching these patterns are classified as
-# bit_part_character instead of named_character.
-
+- COMMUTERS
+- BUSINESSMEN
+- BUSINESSWOMEN
+- CROWD
+- CROWDS
+- EXTRAS
+- PEDESTRIANS
+- TOURISTS
+- PASSENGERS
+- SHOPPERS
+- STUDENTS
+- SOLDIERS
+- SAILORS
+- POLICE
+- OFFICERS
+- GUARDS
+- MUSICIANS
+- BAND
+- ORCHESTRA
+- DANCERS
+- WAITERS
+- STAFF
+- WORKERS
+- EMPLOYEES
+- VOLUNTEERS
+- PROTESTERS
+- DEMONSTRATORS
+- REPORTERS
+- PHOTOGRAPHERS
+- FANS
+- SPECTATORS
+- AUDIENCE
 bit_part_characters:
-  - BARTENDER; WAITER; WAITRESS
-  - SECURITY GUARD; POLICE OFFICER; OFFICER
-  - DRIVER; CAB DRIVER; CONDUCTOR
-  - RECEPTIONIST; NURSE; DOCTOR; ORDERLY
-  - MAID; HOUSEKEEPER; BELLHOP; PORTER; BUTLER
-  - CHEF; COOK; BODYGUARD; DOORMAN; USHER
-  - ATTENDANT; CLERK; CASHIER; TELLER
-  - MESSENGER; COURIER; TECHNICIAN; OPERATOR
-  - DISPATCHER; RECEPTIONIST; ASSISTANT
-  - SECRETARY; PAGE; VALET; STEWARD; STEWARDESS
-  - FLIGHT ATTENDANT; PILOT; COPILOT
-  - CAMERAMAN; PHOTOGRAPHER; REPORTER
+- BARTENDER
+- WAITER
+- WAITRESS
+- SECURITY GUARD
+- POLICE OFFICER
+- OFFICER
+- DRIVER
+- CAB DRIVER
+- CONDUCTOR
+- RECEPTIONIST
+- NURSE
+- DOCTOR
+- ORDERLY
+- MAID
+- HOUSEKEEPER
+- BELLHOP
+- PORTER
+- BUTLER
+- CHEF
+- COOK
+- BODYGUARD
+- DOORMAN
+- USHER
+- ATTENDANT
+- CLERK
+- CASHIER
+- TELLER
+- MESSENGER
+- COURIER
+- TECHNICIAN
+- OPERATOR
+- DISPATCHER
+- RECEPTIONIST
+- ASSISTANT
+- SECRETARY
+- PAGE
+- VALET
+- STEWARD
+- STEWARDESS
+- FLIGHT ATTENDANT
+- PILOT
+- COPILOT
+- CAMERAMAN
+- PHOTOGRAPHER
+- REPORTER

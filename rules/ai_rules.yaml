@@ -1,0 +1,13 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# AI-Registered Rules — READ ONLY in the GUI
+# ═══════════════════════════════════════════════════════════════════════════
+# AI can APPEND new rules here via register_rule() API.
+# AI CANNOT delete or modify existing entries.
+# Human operators can view, approve, or reject these in the Rules Manager.
+# ═══════════════════════════════════════════════════════════════════════════
+
+location_classes: []
+location_matchers: []
+visual_element_patterns: []
+background_population: []
+bit_part_characters: []
