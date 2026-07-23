@@ -5,6 +5,26 @@ try:
     _HAS_RULES = True
 except Exception:
     _HAS_RULES = False
+
+# ── Dark mode detection ─────────────────────────────────────────────────
+import subprocess as _sp
+_DARK = False
+try:
+    _r = _sp.run(["defaults", "read", "-g", "AppleInterfaceStyle"],
+                  capture_output=True, text=True, timeout=1)
+    _DARK = _r.stdout.strip() == "Dark"
+except: pass
+
+# Color constants (adapt to system light/dark)
+if _DARK:
+    LOG_BG, LOG_FG = "#1e1e1e", "#d4d4d4"
+    BTN_BG = "#555"
+    DROP_BG, FILE_FG = "#2d2d2d", "#ccc"
+else:
+    LOG_BG, LOG_FG = "#f8f8f8", "#222"
+    BTN_BG = "#e0e0e0"
+    DROP_BG, FILE_FG = "#fafafa", "#333"
+
 from tkinter import ttk, filedialog, messagebox
 import subprocess, sys, os, json, threading, re
 from pathlib import Path
@@ -143,18 +163,18 @@ class App:
 
         # Drop zone
         self.drop_frame = tk.LabelFrame(body, text="", bd=2, relief="groove",
-                                        bg="#fafafa", height=100)
+                                        bg=DROP_BG, height=100)
         self.drop_frame.pack(fill="x")
         self.drop_frame.pack_propagate(False)
 
-        drop_inner = tk.Frame(self.drop_frame, bg="#fafafa")
+        drop_inner = tk.Frame(self.drop_frame, bg=DROP_BG)
         drop_inner.place(relx=0.5, rely=0.5, anchor="center")
-        tk.Label(drop_inner, text="📄  Drop screenplay here, or", bg="#fafafa",
+        tk.Label(drop_inner, text="📄  Drop screenplay here, or", bg=DROP_BG,
                  font=("Helvetica", 13)).pack()
         self.browse_btn = tk.Button(drop_inner, text="Browse Files…",
                                     command=self.browse, cursor="hand2",
                                     font=("Helvetica", 11), relief="flat",
-                                    bg="#e0e0e0", padx=12, pady=4)
+                                    bg=BTN_BG, padx=12, pady=4)
         self.browse_btn.pack(pady=(6, 0))
 
         # File info row
@@ -172,7 +192,7 @@ class App:
 
         # Log
         self.log = tk.Text(body, height=12, wrap="word", font=("Menlo", 9),
-                           bg="#f8f8f8", fg="#222", bd=1, relief="solid")
+                           bg=LOG_BG, fg=LOG_FG, bd=1, relief="solid")
         self.log.pack(fill="both", expand=True, pady=(8, 0))
         self.log.insert("end", "Select a screenplay and click Run.\n")
 
