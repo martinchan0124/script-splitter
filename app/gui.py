@@ -1,316 +1,242 @@
-"""Script Splitter GUI — for directors. Clean, native, no server."""
-import tkinter as tk
-try:
-    from app.rules_manager import RulesManager
-    _HAS_RULES = True
-    from app.db_browser import InstanceDBBrowser
-    _HAS_DB_BROWSER = True
-
-except Exception:
-    _HAS_RULES = False
-
-# ── Dark mode detection ─────────────────────────────────────────────────
-import subprocess as _sp
-_DARK = False
-try:
-    _r = _sp.run(["defaults", "read", "-g", "AppleInterfaceStyle"],
-                  capture_output=True, text=True, timeout=1)
-    _DARK = _r.stdout.strip() == "Dark"
-except: pass
-
-# Color constants (adapt to system light/dark)
-if _DARK:
-    LOG_BG, LOG_FG = "#1e1e1e", "#d4d4d4"
-    BTN_BG = "#555"
-    DROP_BG, FILE_FG = "#2d2d2d", "#ccc"
-else:
-    LOG_BG, LOG_FG = "#f8f8f8", "#222"
-    BTN_BG = "#e0e0e0"
-    DROP_BG, FILE_FG = "#fafafa", "#333"
-
-from tkinter import ttk, filedialog, messagebox
-import subprocess, sys, os, json, threading, re
-from pathlib import Path
+"""Script Splitter Web GUI — Flask-based UI for screenplay parsing pipeline."""
+import json, os, shutil, sys, threading, time, uuid
 from datetime import datetime
+from pathlib import Path
+
+import flask
 
 ROOT = Path(__file__).resolve().parent.parent
-CONFIG_FILE = ROOT / ".gui_config.json"
+sys.path.insert(0, str(ROOT))
 
-def default_config():
-    return {"stage": 2, "use_llm": False, "use_nlp": False,
-            "output_dir": str(ROOT / "test"), "auto_open": True}
+from script_splitter.pipeline import run_pipeline
 
-def load_config():
-    try:
-        if CONFIG_FILE.exists():
-            cfg = json.loads(CONFIG_FILE.read_text())
-            d = default_config()
-            d.update(cfg)
-            return d
-    except: pass
-    return default_config()
+app = flask.Flask(__name__, template_folder="templates", static_folder="static")
+app.secret_key = "script-splitter-dev"
 
-def save_config(cfg):
-    CONFIG_FILE.write_text(json.dumps(cfg, indent=2))
+UPLOAD_DIR = ROOT / "output" / "web_uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-def script_name(path):
-    name = os.path.splitext(os.path.basename(path))[0]
-    # clean
-    name = re.sub(r"[^a-zA-Z0-9\u4e00-\u9fff]+", "_", name).strip("_").lower()
-    if not name:
-        name = "untitled"
-    ts = datetime.now().strftime("%m%d_%H%M")
-    return f"{name}_{ts}"
+# In-memory run state
+_run_state: dict = {
+    "current_output": None,
+    "running": False,
+    "progress": [],
+    "error": None,
+}
 
-def run_pipeline(script_path, stage, use_llm, output_dir):
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    cmd = [sys.executable, "-m", "app.main", "parse", script_path,
-           "--stage", str(stage), "--output", output_dir]
-    if not use_llm:
-        cmd.append("--no-llm")
-    cmd.append("--no-nlp")
-    proc = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=ROOT)
-    return proc.returncode == 0, proc.stdout + proc.stderr
 
-# ─── Settings Dialog ────────────────────────────────────────────────────
-class SettingsDialog:
-    def __init__(self, parent, config, on_save):
-        self.dialog = tk.Toplevel(parent)
-        self.dialog.title("Settings")
-        self.dialog.geometry("480x380")
-        self.dialog.resizable(False, False)
-        self.dialog.transient(parent)
-        self.dialog.grab_set()
-        self.on_save = on_save
-        self.config = dict(config)
+# ── Helpers ────────────────────────────────────────────────────────────────
 
-        f = ttk.Frame(self.dialog, padding=24)
-        f.pack(fill="both", expand=True)
+def _load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text().strip().splitlines() if line.strip()]
 
-        # Pipeline
-        ttk.Label(f, text="Pipeline Stage", font=("Helvetica", 12, "bold")).pack(anchor="w")
-        self.stage_var = tk.IntVar(value=config["stage"])
-        for i, label in enumerate(["1 — Scene split only", "2 — + Entity extraction", "3 — + LLM routing"], 1):
-            ttk.Radiobutton(f, text=label, variable=self.stage_var, value=i).pack(anchor="w", padx=10, pady=2)
 
-        ttk.Separator(f, orient="horizontal").pack(fill="x", pady=15)
+def _load_output_dir(path: Path) -> dict:
+    """Load all structured data from an output directory."""
+    data_dir = path / "data"
+    scenes_dir = path / "scenes"
+    result = {
+        "report": {},
+        "scenes": [],
+        "shots": [],
+        "global_characters": [],
+        "global_location_assets": [],
+        "global_visual_elements": [],
+        "scene_character_instances": [],
+        "scene_location_instances": [],
+        "scene_visual_elements": [],
+        "scene_markdowns": [],
+        "instance_db": {},
+    }
+    # Report
+    report_path = data_dir / "parse_report.json"
+    if report_path.exists():
+        result["report"] = json.loads(report_path.read_text())
 
-        # Options
-        ttk.Label(f, text="Options", font=("Helvetica", 12, "bold")).pack(anchor="w")
-        self.llm_var = tk.BooleanVar(value=config["use_llm"])
-        ttk.Checkbutton(f, text="Enable LLM (requires .env with DEEPSEEK_API_KEY)",
-                       variable=self.llm_var).pack(anchor="w", padx=10, pady=2)
-        self.nlp_var = tk.BooleanVar(value=config["use_nlp"])
-        ttk.Checkbutton(f, text="Enable spaCy NER pre-scan",
-                       variable=self.nlp_var).pack(anchor="w", padx=10, pady=2)
+    # Scene records + shots
+    scenes = _load_jsonl(data_dir / "scenes.jsonl")
+    result["scenes"] = scenes
+    shots = _load_jsonl(data_dir / "shots.jsonl")
+    result["shots"] = shots
 
-        ttk.Separator(f, orient="horizontal").pack(fill="x", pady=15)
+    # Entity data
+    result["global_characters"] = _load_jsonl(data_dir / "global_characters.jsonl")
+    result["global_location_assets"] = _load_jsonl(data_dir / "global_location_assets.jsonl")
+    result["global_visual_elements"] = _load_jsonl(data_dir / "global_visual_elements.jsonl")
+    result["scene_character_instances"] = _load_jsonl(data_dir / "scene_character_instances.jsonl")
+    result["scene_location_instances"] = _load_jsonl(data_dir / "scene_location_instances.jsonl")
+    result["scene_visual_elements"] = _load_jsonl(data_dir / "scene_visual_elements.jsonl")
 
-        # Output
-        ttk.Label(f, text="Output Directory", font=("Helvetica", 12, "bold")).pack(anchor="w")
-        orow = ttk.Frame(f)
-        orow.pack(fill="x", padx=10, pady=5)
-        self.out_var = tk.StringVar(value=config["output_dir"])
-        ttk.Entry(orow, textvariable=self.out_var).pack(side="left", fill="x", expand=True)
-        ttk.Button(orow, text="Browse…", command=self.browse_out).pack(side="right", padx=(8, 0))
+    # Scene markdowns
+    if scenes_dir.exists():
+        result["scene_markdowns"] = sorted(
+            [f.name for f in scenes_dir.iterdir() if f.suffix == ".md"]
+        )
 
-        self.auto_var = tk.BooleanVar(value=config["auto_open"])
-        ttk.Checkbutton(f, text="Open output folder after run",
-                       variable=self.auto_var).pack(anchor="w", padx=10, pady=2)
+    # Instance DB
+    inst_path = path / "instance_db.json"
+    if inst_path.exists():
+        result["instance_db"] = json.loads(inst_path.read_text())
 
-        # Buttons
-        bf = ttk.Frame(f)
-        bf.pack(fill="x", pady=(20, 0))
-        ttk.Button(bf, text="Cancel", command=self.dialog.destroy).pack(side="right", padx=(8, 0))
-        ttk.Button(bf, text="Save", command=self.save).pack(side="right")
-
-    def browse_out(self):
-        d = filedialog.askdirectory()
-        if d:
-            self.out_var.set(d)
-
-    def save(self):
-        self.config["stage"] = self.stage_var.get()
-        self.config["use_llm"] = self.llm_var.get()
-        self.config["use_nlp"] = self.nlp_var.get()
-        self.config["output_dir"] = self.out_var.get()
-        self.config["auto_open"] = self.auto_var.get()
-        save_config(self.config)
-        self.on_save(self.config)
-        self.dialog.destroy()
-
-# ─── Main App ──────────────────────────────────────────────────────────
-class App:
-    def __init__(self):
-        self.cfg = load_config()
-        self.output_path = None
-
-        self.win = tk.Tk()
-        self.win.title("Script Splitter ◬")
-        self.win.geometry("680x560")
-        self.win.minsize(520, 420)
-
-        # ── Top bar ──
-        top = ttk.Frame(self.win, padding=(20, 16, 20, 0))
-        top.pack(fill="x")
-        ttk.Label(top, text="Script Splitter ◬", font=("Helvetica", 20, "bold")).pack(side="left")
-        ttk.Button(top, text="📖 DB", command=self.open_db).pack(side="right", padx=(4, 4))
-        ttk.Button(top, text="📋 Rules", command=self.open_rules).pack(side="right", padx=(4, 4))
-        ttk.Button(top, text="⚙", width=3, command=self.open_settings).pack(side="right")
-        ttk.Label(top, text="Layout-aware screenplay parser", foreground="gray",
-                  font=("Helvetica", 10)).pack(side="left", padx=(12, 0), pady=(6, 0))
-
-        # ── Body ──
-        body = ttk.Frame(self.win, padding=20)
-        body.pack(fill="both", expand=True)
-
-        # Drop zone
-        self.drop_frame = tk.LabelFrame(body, text="", bd=2, relief="groove",
-                                        bg=DROP_BG, height=100)
-        self.drop_frame.pack(fill="x")
-        self.drop_frame.pack_propagate(False)
-
-        drop_inner = tk.Frame(self.drop_frame, bg=DROP_BG)
-        drop_inner.place(relx=0.5, rely=0.5, anchor="center")
-        tk.Label(drop_inner, text="📄  Drop screenplay here, or", bg=DROP_BG,
-                 font=("Helvetica", 13)).pack()
-        self.browse_btn = tk.Button(drop_inner, text="Browse Files…",
-                                    command=self.browse, cursor="hand2",
-                                    font=("Helvetica", 11), relief="flat",
-                                    bg=BTN_BG, padx=12, pady=4)
-        self.browse_btn.pack(pady=(6, 0))
-
-        # File info row
-        info = ttk.Frame(body)
-        info.pack(fill="x", pady=(14, 0))
-        self.file_label = ttk.Label(info, text="No file selected", foreground="gray")
-        self.file_label.pack(side="left")
-        self.run_btn = ttk.Button(info, text="▶  Run Pipeline", command=self.run, state="disabled")
-        self.run_btn.pack(side="right")
-
-        # Stage indicator
-        self.stage_label = ttk.Label(body, text=f"Stage: {self.cfg['stage']}",
-                                      foreground="gray", font=("Helvetica", 9))
-        self.stage_label.pack(anchor="w", pady=(4, 0))
-
-        # Log
-        self.log = tk.Text(body, height=12, wrap="word", font=("Menlo", 9),
-                           bg=LOG_BG, fg=LOG_FG, bd=1, relief="solid")
-        self.log.pack(fill="both", expand=True, pady=(8, 0))
-        self.log.insert("end", "Select a screenplay and click Run.\n")
-
-        # Output link
-        self.out_link = ttk.Label(body, text="", foreground="blue", cursor="hand2")
-        self.out_link.pack(anchor="w", pady=(6, 0))
-        self.out_link.bind("<Button-1>", lambda e: self.open_output())
-
-        self.selected_path = None
-        self.win.mainloop()
-
-    def browse(self):
-        path = filedialog.askopenfilename(
-            title="Select Screenplay",
-            filetypes=[("Screenplay", "*.pdf *.docx *.txt *.fountain"),
-                       ("PDF", "*.pdf"), ("Word", "*.docx"),
-                       ("Text", "*.txt *.fountain")])
-        if path:
-            self.select_file(path)
-
-    def select_file(self, path):
-        self.selected_path = path
-        self.file_label.config(text=f"📄  {os.path.basename(path)}", foreground="#333")
-        self.run_btn.config(state="normal")
-
-    def open_db(self):
-        if _HAS_DB_BROWSER:
-            from tkinter import filedialog
-            p = filedialog.askopenfilename(title="Select instance_db.json",
-                filetypes=[("JSON", "*.json")],
-                initialdir=str(ROOT / "test"))
-            if p:
-                try:
-                    InstanceDBBrowser(self.win, p)
-                except Exception as e:
-                    messagebox.showerror("Error", str(e))
+    # Build scene-to-data mapping
+    scene_map = {}
+    for s in scenes:
+        sid = s.get("scene_id", "")
+        heading = s.get("heading", {})
+        if isinstance(heading, dict):
+            raw = heading.get("raw", "")
         else:
-            messagebox.showerror("Error", "DB browser unavailable")
+            raw = str(heading)
+        scene_map[sid] = {
+            "order": s.get("scene_order", 0),
+            "heading": raw,
+            "shots": [sh for sh in shots if sh.get("scene_id") == sid],
+            "characters": [c for c in result["scene_character_instances"] if c.get("scene_id") == sid],
+            "locations": [l for l in result["scene_location_instances"] if l.get("scene_id") == sid],
+            "visual_elements": [v for v in result["scene_visual_elements"] if v.get("scene_id") == sid],
+        }
+    result["scene_map"] = scene_map
 
-    def open_rules(self):
-        if _HAS_RULES:
-            try:
-                RulesManager(self.win)
-            except Exception as e:
-                messagebox.showerror("Rules Manager Error", str(e))
-        else:
-            messagebox.showerror("Error", "Rules manager requires PyYAML. Run: pip install pyyaml")
+    return result
 
-    def open_settings(self):
-        SettingsDialog(self.win, self.cfg, self.on_settings_saved)
 
-    def on_settings_saved(self, cfg):
-        self.cfg = cfg
-        self.stage_label.config(text=f"Stage: {cfg['stage']}")
-        self.log_insert(f"Settings updated: stage={cfg['stage']}, llm={cfg['use_llm']}")
+# ── Routes ────────────────────────────────────────────────────────────────
 
-    def log_insert(self, msg):
-        self.log.insert("end", msg + "\n")
-        self.log.see("end")
-        self.win.update()
+@app.route("/")
+def index():
+    return flask.render_template("index.html", state=_run_state)
 
-    def open_output(self):
-        if self.output_path and os.path.exists(self.output_path):
-            subprocess.run(["open", self.output_path])
 
-    def run(self):
-        if not self.selected_path or not os.path.exists(self.selected_path):
-            messagebox.showerror("Error", "Please select a valid file.")
-            return
+@app.route("/run", methods=["POST"])
+def run():
+    if _run_state["running"]:
+        return flask.jsonify({"error": "Already running"}), 400
 
-        # Build output path: {output_dir}/{script_name}/
-        name = script_name(self.selected_path)
-        final_out = os.path.join(self.cfg["output_dir"], name)
-        os.makedirs(final_out, exist_ok=True)
+    file = flask.request.files.get("script")
+    if not file or not file.filename:
+        return flask.jsonify({"error": "No file uploaded"}), 400
 
-        self.run_btn.config(state="disabled")
-        self.log.delete("1.0", "end")
-        self.log_insert(f"Parsing: {os.path.basename(self.selected_path)}")
-        self.log_insert(f"Stage:     {self.cfg['stage']}")
-        self.log_insert(f"Output:    {final_out}")
-        self.log_insert("─" * 40)
+    stage = int(flask.request.form.get("stage", 2))
+    use_llm = flask.request.form.get("use_llm", "on") == "on"
+    use_wash = flask.request.form.get("use_wash", "off") == "on"
+    use_nlp = flask.request.form.get("use_nlp", "on") == "on"
 
-        def task():
-            ok, output = run_pipeline(
-                self.selected_path, self.cfg["stage"],
-                self.cfg["use_llm"] and self.cfg["stage"] >= 3,
-                final_out,
+    # Save upload
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:6]
+    upload_path = UPLOAD_DIR / run_id / file.filename
+    upload_path.parent.mkdir(parents=True, exist_ok=True)
+    file.save(str(upload_path))
+
+    output_dir = UPLOAD_DIR / run_id / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    _run_state["running"] = True
+    _run_state["progress"] = []
+    _run_state["error"] = None
+    _run_state["current_output"] = None
+
+    def _progress(msg):
+        _run_state["progress"].append(msg)
+
+    def _run():
+        try:
+            run_pipeline(
+                str(upload_path),
+                stage=stage,
+                use_llm=use_llm,
+                use_wash=use_wash,
+                use_nlp=use_nlp,
+                output_dir=str(output_dir),
+                progress=_progress,
+                llm_cache_dir=str(output_dir / "llm_cache") if stage >= 3 and use_llm else None,
             )
-            self.win.after(0, lambda: self._done(ok, output, final_out))
+            _run_state["current_output"] = str(output_dir)
+        except Exception as e:
+            _run_state["error"] = str(e)
+        finally:
+            _run_state["running"] = False
 
-        threading.Thread(target=task, daemon=True).start()
+    threading.Thread(target=_run, daemon=True).start()
+    return flask.jsonify({"status": "started"})
 
-    def _done(self, ok, output, out_path):
-        self.run_btn.config(state="normal")
-        for line in output.splitlines():
-            self.log_insert(line)
-        self.output_path = out_path
-        if ok:
-            # Parse stats from log
-            for line in output.splitlines():
-                if "Created" in line and "scenes" in line:
-                    self.log_insert("")
-                    self.log_insert("✅ Done.")
-                    break
-                if "Parsed" in line:
-                    self.log_insert("")
-                    self.log_insert("✅ Done. Open output to see results.")
-                    break
-            self.out_link.config(text=f"📂  {out_path}")
-            if self.cfg["auto_open"]:
-                subprocess.run(["open", out_path])
-        else:
-            self.log_insert("")
-            self.log_insert("❌ Pipeline failed. Check the log above.")
+
+@app.route("/progress")
+def progress():
+    return flask.jsonify({
+        "running": _run_state["running"],
+        "progress": _run_state["progress"],
+        "error": _run_state["error"],
+        "current_output": _run_state["current_output"],
+    })
+
+
+@app.route("/results")
+def results():
+    out = _run_state.get("current_output")
+    if not out:
+        return flask.redirect("/")
+    data = _load_output_dir(Path(out))
+    return flask.render_template("results.html", data=data)
+
+
+@app.route("/results/<scene_id>")
+def scene_detail(scene_id):
+    out = _run_state.get("current_output")
+    if not out:
+        return flask.redirect("/")
+    data = _load_output_dir(Path(out))
+    scene = data.get("scene_map", {}).get(scene_id, {})
+    return flask.render_template("scene_detail.html", scene=scene, scene_id=scene_id)
+
+
+@app.route("/entities")
+def entities():
+    out = _run_state.get("current_output")
+    if not out:
+        return flask.redirect("/")
+    data = _load_output_dir(Path(out))
+    return flask.render_template("entities.html", data=data)
+
+
+@app.route("/rules")
+def rules_view():
+    """View rules.yaml and ai_rules.yaml"""
+    rules_path = ROOT / "rules" / "rules.yaml"
+    ai_rules_path = ROOT / "rules" / "ai_rules.yaml"
+    rules_text = rules_path.read_text() if rules_path.exists() else ""
+    ai_rules_text = ai_rules_path.read_text() if ai_rules_path.exists() else ""
+    return flask.render_template("rules.html", rules_text=rules_text, ai_rules_text=ai_rules_text)
+
+
+@app.route("/instance-db")
+def instance_db_view():
+    out = _run_state.get("current_output")
+    if not out:
+        return flask.redirect("/")
+    data = _load_output_dir(Path(out))
+    idb = data.get("instance_db", {})
+    return flask.render_template("instance_db.html", idb=idb)
+
+
+@app.route("/api/data")
+def api_data():
+    out = _run_state.get("current_output")
+    if not out:
+        return flask.jsonify({})
+    return flask.jsonify(_load_output_dir(Path(out)))
+
+
+# ── Entry point ─────────────────────────────────────────────────────────
+
+def main():
+    import webbrowser
+    url = "http://127.0.0.1:5001"
+    print(f"  Script Splitter Web GUI → {url}")
+    webbrowser.open(url)
+    app.run(host="127.0.0.1", port=5001, debug=False)
+
 
 if __name__ == "__main__":
-    App()
+    main()

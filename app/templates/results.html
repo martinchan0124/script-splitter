@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>Scenes</h1>
+    <p class="subtitle">{{ data.scenes|length }} scenes · {{ data.shots|length }} shots</p>
+  </div>
+
+  {% if data.report %}
+  <div class="panel summary-bar">
+    <div class="summary-stat"><strong>{{ data.report.scene_count }}</strong> scenes</div>
+    <div class="summary-stat"><strong>{{ data.report.shot_count }}</strong> shots</div>
+    <div class="summary-stat"><strong>{{ data.report.character_count or '?' }}</strong> characters</div>
+    <div class="summary-stat"><strong>{{ data.report.location_asset_count or '?' }}</strong> locations</div>
+    <div class="summary-stat"><strong>{{ data.report.visual_element_count or '?' }}</strong> visual elems</div>
+  </div>
+  {% endif %}
+
+  <div class="scene-list">
+    {% for sid, s in data.scene_map.items() %}
+    <details class="scene-card" {% if loop.first %}open{% endif %}>
+      <summary class="scene-heading">
+        <span class="scene-order">{{ s.order }}</span>
+        <span class="scene-title">{{ s.heading }}</span>
+        <span class="scene-meta">{{ s.shots|length }} shots · {{ s.characters|length }} chars</span>
+      </summary>
+      <div class="scene-body">
+        <!-- Shots -->
+        <div class="shots-list">
+          {% for shot in s.shots %}
+          <div class="shot-item">
+            <code class="shot-id">{{ shot.shot_id }}</code>
+            <span class="shot-content">{{ shot.content }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <!-- Entities -->
+        <div class="entity-summary">
+          {% if s.characters %}
+          <div class="entity-tag-group">
+            <span class="tag-label">Characters:</span>
+            {% for c in s.characters %}
+            <span class="tag tag-char">{{ c.name or c.character_id }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if s.locations %}
+          <div class="entity-tag-group">
+            <span class="tag-label">Locations:</span>
+            {% for l in s.locations %}
+            <span class="tag tag-loc">{{ l.location_class_id or l.location_id }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if s.visual_elements %}
+          <div class="entity-tag-group">
+            <span class="tag-label">Visual Elements:</span>
+            {% for v in s.visual_elements %}
+            <span class="tag tag-ve">{{ v.name or v.element_id }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

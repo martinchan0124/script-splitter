@@ -1,0 +1,148 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>Pipeline</h1>
+    <p class="subtitle">Parse a screenplay into structured scene-shot data</p>
+  </div>
+
+  <div class="panel upload-panel" id="uploadPanel">
+    <div class="upload-zone" id="dropZone">
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">
+        <strong>Drop a screenplay here</strong><br>
+        <span class="upload-hint">PDF, DOCX, TXT, or Fountain format</span>
+      </div>
+      <label class="upload-btn" for="fileInput">Choose File</label>
+      <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.fountain,.md" style="display:none">
+      <div class="upload-filename" id="fileName"></div>
+    </div>
+  </div>
+
+  <div class="panel config-panel">
+    <h2>Configuration</h2>
+    <div class="config-grid">
+      <div class="config-item">
+        <label class="config-label">Pipeline Stage</label>
+        <div class="stage-selector">
+          <button class="stage-btn" data-stage="1">1 — Split</button>
+          <button class="stage-btn active" data-stage="2">2 — Extract</button>
+          <button class="stage-btn" data-stage="3">3 — Route</button>
+        </div>
+        <input type="hidden" id="stage" value="2">
+      </div>
+      <div class="config-item">
+        <label class="config-label">Options</label>
+        <div class="toggle-group">
+          <label class="toggle">
+            <input type="checkbox" id="useNlp" checked>
+            <span class="toggle-track"></span>
+            <span class="toggle-label">spaCy NLP</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="useLlm" checked>
+            <span class="toggle-track"></span>
+            <span class="toggle-label">LLM</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="useWash">
+            <span class="toggle-track"></span>
+            <span class="toggle-label">LLM Wash</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <button class="run-btn" id="runBtn" disabled>▶ Run Pipeline</button>
+  </div>
+
+  <div class="panel progress-panel" id="progressPanel" style="display:none">
+    <h2>Progress</h2>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-log" id="progressLog"></div>
+  </div>
+</div>
+
+<script>
+var fileData = null;
+var pollTimer = null;
+
+document.getElementById('dropZone').addEventListener('dragover', function(e) {
+  e.preventDefault(); this.classList.add('drag-over');
+});
+document.getElementById('dropZone').addEventListener('dragleave', function() {
+  this.classList.remove('drag-over');
+});
+document.getElementById('dropZone').addEventListener('drop', function(e) {
+  e.preventDefault(); this.classList.remove('drag-over');
+  var f = e.dataTransfer.files[0]; if (f) handleFile(f);
+});
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  if (this.files[0]) handleFile(this.files[0]);
+});
+
+function handleFile(f) {
+  fileData = f;
+  document.getElementById('fileName').textContent = '✓ ' + f.name;
+  document.getElementById('runBtn').disabled = false;
+  document.querySelector('.upload-zone').classList.add('has-file');
+}
+
+document.querySelectorAll('.stage-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.stage-btn').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    document.getElementById('stage').value = this.dataset.stage;
+  });
+});
+
+document.getElementById('runBtn').addEventListener('click', function() {
+  if (!fileData) return;
+  var form = new FormData();
+  form.append('script', fileData);
+  form.append('stage', document.getElementById('stage').value);
+  form.append('use_nlp', document.getElementById('useNlp').checked ? 'on' : 'off');
+  form.append('use_llm', document.getElementById('useLlm').checked ? 'on' : 'off');
+  form.append('use_wash', document.getElementById('useWash').checked ? 'on' : 'off');
+
+  document.getElementById('progressPanel').style.display = 'block';
+  document.getElementById('progressLog').textContent = '';
+  document.getElementById('progressFill').style.width = '0%';
+  this.disabled = true;
+  this.textContent = '⏳ Running...';
+
+  fetch('/run', { method: 'POST', body: form })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { flash(d.error, 'error'); return; }
+      pollTimer = setInterval(pollProgress, 500);
+    });
+});
+
+function pollProgress() {
+  fetch('/progress').then(function(r) { return r.json(); }).then(function(d) {
+    var log = document.getElementById('progressLog');
+    var fill = document.getElementById('progressFill');
+    d.progress.forEach(function(msg) {
+      if (log.textContent.indexOf(msg) === -1) {
+        log.textContent += msg + '\n';
+        log.scrollTop = log.scrollHeight;
+      }
+    });
+    if (d.current_output) {
+      fill.style.width = '100%';
+    }
+    if (!d.running) {
+      clearInterval(pollTimer);
+      document.getElementById('runBtn').disabled = false;
+      document.getElementById('runBtn').textContent = '▶ Run Pipeline';
+      if (d.error) {
+        flash('Error: ' + d.error, 'error');
+      } else if (d.current_output) {
+        flash('Pipeline complete!', 'success');
+        setTimeout(function(){ window.location.href = '/results'; }, 800);
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

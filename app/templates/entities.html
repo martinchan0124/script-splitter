@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>Entities</h1>
+    <p class="subtitle">Global entity registry extracted from screenplay</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('chars')">Characters ({{ data.global_characters|length }})</button>
+    <button class="tab-btn" onclick="switchTab('locs')">Locations ({{ data.global_location_assets|length }})</button>
+    <button class="tab-btn" onclick="switchTab('ves')">Visual Elements ({{ data.global_visual_elements|length }})</button>
+  </div>
+
+  <div id="tab-chars" class="tab-content active">
+    {% if data.global_characters %}
+    <table class="entity-table">
+      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Speaking</th><th>Attributes</th></tr></thead>
+      <tbody>
+        {% for c in data.global_characters %}
+        <tr>
+          <td><code>{{ c.character_id }}</code></td>
+          <td><strong>{{ c.name or c.name_raw }}</strong></td>
+          <td>{{ c.type or 'named_character' }}</td>
+          <td>{{ '🎤' if c.speaking else '—' }}</td>
+          <td class="attr-cell">{{ c.semantic_attributes | tojson if c.semantic_attributes else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state">No characters extracted. Run Stage 2+.</div>{% endif %}
+  </div>
+
+  <div id="tab-locs" class="tab-content">
+    {% if data.global_location_assets %}
+    <table class="entity-table">
+      <thead><tr><th>ID</th><th>Location</th><th>Class</th><th>Period</th></tr></thead>
+      <tbody>
+        {% for l in data.global_location_assets %}
+        <tr>
+          <td><code>{{ l.location_id or l.asset_id }}</code></td>
+          <td><strong>{{ l.primary_location_raw or l.name_raw }}</strong></td>
+          <td><span class="tag tag-loc">{{ l.location_class_id or l.class_id }}</span></td>
+          <td>{{ l.effective_date_or_period or l.date_or_period_raw or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state">No locations extracted. Run Stage 2+.</div>{% endif %}
+  </div>
+
+  <div id="tab-ves" class="tab-content">
+    {% if data.global_visual_elements %}
+    <table class="entity-table">
+      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Rule ID</th></tr></thead>
+      <tbody>
+        {% for v in data.global_visual_elements %}
+        <tr>
+          <td><code>{{ v.element_id or v.asset_id }}</code></td>
+          <td><strong>{{ v.name or v.name_raw }}</strong></td>
+          <td><span class="tag tag-ve">{{ v.visual_element_type or v.type }}</span></td>
+          <td><code>{{ v.rule_id or '—' }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state">No visual elements extracted. Run Stage 2+.</div>{% endif %}
+  </div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelector('.tab-btn[onclick*="' + name + '"]').classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+{% endblock %}

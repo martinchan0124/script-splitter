@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Script Splitter ◬</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <span class="logo">◬</span>
+      <span class="logo-text">Script Splitter</span>
+    </div>
+    <div class="sidebar-nav">
+      <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+        <span class="nav-icon">▷</span> Pipeline
+      </a>
+      <a href="/results" class="nav-item {% if request.path.startswith('/results') %}active{% endif %}">
+        <span class="nav-icon">≡</span> Scenes
+      </a>
+      <a href="/entities" class="nav-item {% if request.path == '/entities' %}active{% endif %}">
+        <span class="nav-icon">◎</span> Entities
+      </a>
+      <a href="/instance-db" class="nav-item {% if request.path == '/instance-db' %}active{% endif %}">
+        <span class="nav-icon">◈</span> InstanceDB
+      </a>
+      <a href="/rules" class="nav-item {% if request.path == '/rules' %}active{% endif %}">
+        <span class="nav-icon">☰</span> Rules
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <span class="version">v0.1 · Layout-aware parser</span>
+    </div>
+  </nav>
+  <main class="main">{% block content %}{% endblock %}</main>
+</div>
+<script>
+function flash(msg, type) {
+  var el = document.createElement('div');
+  el.className = 'flash flash-' + (type || 'info');
+  el.textContent = msg;
+  document.querySelector('.main').prepend(el);
+  setTimeout(function(){ el.remove(); }, 4000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>Rules</h1>
+    <p class="subtitle">Human rules (editable) + AI-registered rules (append-only)</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchRulesTab('human')">rules.yaml</button>
+    <button class="tab-btn" onclick="switchRulesTab('ai')">ai_rules.yaml</button>
+  </div>
+
+  <div id="rules-human" class="tab-content active">
+    <div class="panel">
+      <div class="code-header">
+        <span>rules.yaml — Human territory</span>
+      </div>
+      <pre class="code-block"><code>{{ rules_text }}</code></pre>
+    </div>
+  </div>
+
+  <div id="rules-ai" class="tab-content">
+    <div class="panel">
+      <div class="code-header">
+        <span>ai_rules.yaml — AI append-only</span>
+      </div>
+      <pre class="code-block"><code>{{ ai_rules_text }}</code></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchRulesTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelector('.tab-btn[onclick*="' + name + '"]').classList.add('active');
+  document.getElementById('rules-' + name).classList.add('active');
+}
+</script>
+{% endblock %}

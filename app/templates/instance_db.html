@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>InstanceDB</h1>
+    <p class="subtitle">Iterative entity registry built scene by scene</p>
+  </div>
+
+  {% if idb and idb.metadata %}
+  <div class="panel summary-bar">
+    <div class="summary-stat"><strong>{{ idb.metadata.scenes_processed }}</strong> scenes</div>
+    <div class="summary-stat"><strong>{{ idb.characters|length }}</strong> characters</div>
+    <div class="summary-stat"><strong>{{ idb.locations|length }}</strong> locations</div>
+    <div class="summary-stat"><strong>{{ idb.visual_elements|length }}</strong> visual elems</div>
+    <div class="summary-stat"><strong>{{ idb.metadata.total_changes or 0 }}</strong> total changes</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchDBTab('chars')">Characters ({{ idb.characters|length }})</button>
+    <button class="tab-btn" onclick="switchDBTab('locs')">Locations ({{ idb.locations|length }})</button>
+    <button class="tab-btn" onclick="switchDBTab('ves')">Visual Elements ({{ idb.visual_elements|length }})</button>
+    <button class="tab-btn" onclick="switchDBTab('hist')">Change History ({{ idb.changes_history|length }})</button>
+  </div>
+
+  <div id="db-chars" class="tab-content active">
+    {% if idb.characters %}
+    <table class="entity-table">
+      <thead><tr><th>ID</th><th>Name</th><th>Source</th><th>Speaking</th><th>Scenes</th></tr></thead>
+      <tbody>
+        {% for cid, c in idb.characters.items() %}
+        <tr>
+          <td><code>{{ c.character_id }}</code></td>
+          <td><strong>{{ c.name_raw }}</strong></td>
+          <td>{{ c.source }}</td>
+          <td>{{ '🎤' if c.speaking else '—' }}</td>
+          <td><code>{{ c.scenes|join(', ') }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state">No InstanceDB data. Run with --wash.</div>{% endif %}
+  </div>
+
+  <div id="db-locs" class="tab-content">
+    {% if idb.locations %}
+    <table class="entity-table">
+      <thead><tr><th>ID</th><th>Raw Name</th><th>Class</th><th>Scenes</th></tr></thead>
+      <tbody>
+        {% for lid, l in idb.locations.items() %}
+        <tr>
+          <td><code>{{ l.location_id }}</code></td>
+          <td>{{ l.primary_location_raw }}</td>
+          <td><span class="tag tag-loc">{{ l.location_class_id }}</span></td>
+          <td><code>{{ l.scenes|join(', ') }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state">No location data.</div>{% endif %}
+  </div>
+
+  <div id="db-ves" class="tab-content">
+    {% if idb.visual_elements %}
+    <table class="entity-table">
+      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Rule</th><th>Scenes</th></tr></thead>
+      <tbody>
+        {% for eid, v in idb.visual_elements.items() %}
+        <tr>
+          <td><code>{{ v.element_id }}</code></td>
+          <td><strong>{{ v.name_raw }}</strong></td>
+          <td><span class="tag tag-ve">{{ v.visual_element_type }}</span></td>
+          <td><code>{{ v.rule_id or '—' }}</code></td>
+          <td><code>{{ v.scenes|join(', ') }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty-state">No visual element data.</div>{% endif %}
+  </div>
+
+  <div id="db-hist" class="tab-content">
+    {% if idb.changes_history %}
+    <div class="history-list">
+      {% for h in idb.changes_history %}
+      <details class="history-item" {% if loop.first %}open{% endif %}>
+        <summary>
+          <strong>{{ h.scene_id }}</strong>
+          <span class="history-meta">
+            +{{ h.new_characters|length }} chars · +{{ h.new_visual_elements|length }} VEs · +{{ h.new_locations|length }} locs
+            {% if h.updated_characters %} · ~{{ h.updated_characters|length }} updated{% endif %}
+          </span>
+        </summary>
+        <div class="history-body">
+          {% if h.new_characters %}
+          <div class="hist-section"><strong>New Characters:</strong>
+            {% for c in h.new_characters %}<span class="tag tag-char">{{ c.name }} (id: {{ c.character_id }})</span> {% endfor %}
+          </div>
+          {% endif %}
+          {% if h.updated_characters %}
+          <div class="hist-section"><strong>Updated Characters:</strong>
+            {% for c in h.updated_characters %}<span class="tag tag-char">{{ c.name }} (id: {{ c.character_id }})</span> {% endfor %}
+          </div>
+          {% endif %}
+          {% if h.new_locations %}
+          <div class="hist-section"><strong>New Locations:</strong>
+            {% for l in h.new_locations %}<span class="tag tag-loc">{{ l.class_id }} (id: {{ l.location_id }})</span> {% endfor %}
+          </div>
+          {% endif %}
+          {% if h.new_visual_elements %}
+          <div class="hist-section"><strong>New Visual Elements:</strong>
+            {% for v in h.new_visual_elements %}<span class="tag tag-ve">{{ v.name }} ({{ v.type }}, id: {{ v.element_id }})</span> {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </details>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty-state">No change history. Run with --wash first.</div>{% endif %}
+  </div>
+
+  {% else %}
+  <div class="panel">
+    <div class="empty-state">No InstanceDB data available. Run the pipeline with LLM Wash enabled.</div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function switchDBTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  var btn = document.querySelector('.tab-btn[onclick*="' + name + '"]');
+  if (btn) btn.classList.add('active');
+  document.getElementById('db-' + name).classList.add('active');
+}
+</script>
+{% endblock %}
