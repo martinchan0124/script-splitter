@@ -10,9 +10,6 @@ visual_element_patterns:
   - switches on
   - watches
   - assembles
-background_population: []
-bit_part_characters: []
-VISUAL ELEMENT PATTERNS:
 - type: VE_PROP_PHOTOGRAPHY
   name: camera
   triggers:
@@ -97,7 +94,6 @@ VISUAL ELEMENT PATTERNS:
   - smoking
   - lights
   - stubs
-visual_elements:
 - type: VE_VEHICLE_BICYCLE
   triggers:
   - bicycle
@@ -105,7 +101,6 @@ visual_elements:
   verbs:
   - rides
   - pedals
-VISUAL_ELEMENT_PATTERNS:
 - type: VE_PROP_PHOTOGRAPH
   triggers:
   - photo
@@ -133,3 +128,5 @@ VISUAL_ELEMENT_PATTERNS:
   - picks up
   - looks through
   - glances at
+background_population: []
+bit_part_characters: []

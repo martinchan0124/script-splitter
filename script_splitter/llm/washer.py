@@ -132,6 +132,7 @@ Text:
         "background_population": ["background_population", "background population", "BACKGROUND POPULATION"],
         "bit_part_characters": ["bit_part_characters", "bit part characters", "BIT PART CHARACTERS"],
     }
+    KNOWN_SECTIONS = set(SECTION_ALIASES.keys())
 
     @staticmethod
     def _normalize_section(raw):
@@ -145,6 +146,9 @@ Text:
         reg = 0
         for prop in proposals:
             section = self._normalize_section(prop.get("section", ""))
+            if section not in self.KNOWN_SECTIONS:
+                logger.warning(f"[washer] skipping unknown section '{section}' from proposal")
+                continue
             sug = prop.get("suggestion")
             if section and sug:
                 try:
