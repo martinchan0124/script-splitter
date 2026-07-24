@@ -72,15 +72,24 @@ Entity IDs are integers when referencing global assets (e.g., `character_id: 100
 
 ## Quick start
 
+### Web GUI (recommended)
 ```bash
-# Install dependencies
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
+```
 
-# Run on a PDF
+Then double-click **Script Splitter.app** or run:
+```bash
+python app/gui.py
+```
+Opens a browser at `http://127.0.0.1:5001` with drag-and-drop upload, pipeline config, and result viewers.
+
+### CLI
+```bash
+# Parse a PDF (stage 2, no LLM)
 python -m app.main parse script.pdf --stage 2 --no-llm --output ./output
 
-# Run on a DOCX
+# Parse a DOCX
 python -m app.main parse script.docx --stage 2 --no-llm --output ./output
 
 # Full pipeline with LLM (requires DeepSeek API key in .env)
