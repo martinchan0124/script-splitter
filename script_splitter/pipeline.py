@@ -49,6 +49,7 @@ class ParseResult:
     scene_prop_interactions: list[ScenePropInteraction] = field(default_factory=list)
     scene_intention_analyses: list[SceneIntentionAnalysis] = field(default_factory=list)
     scene_beats: list[SceneBeat] = field(default_factory=list)
+    wash_results: dict[str, dict] = field(default_factory=dict)
     reviews: list[ReviewRecord] = field(default_factory=list)
     extraction_warnings: list[WarningRecord] = field(default_factory=list)
 
@@ -155,9 +156,11 @@ def run_pipeline(
                 wres = washer.wash_script(result.scenes, instance_db=idb)
                 result.report.warnings.append(f"washer_processed:{len(wres)}_scenes")
                 _log(progress, f"[stage2.5] Washed {len(wres)} scenes")
+                # Store wash results for scene markdown write-back
+                for wr in wres:
+                    result.wash_results[wr.get("scene_id", "")] = idb.get_scene_entities(wr.get("scene_id", ""))
                 idb.write(str(Path(output_dir) / "instance_db.json"))
-                _log(progress, f"[stage2.5] Instance DB: {len(idb.characters)} chars")
-                idb.write(Path(output_dir) / "instance_db.json")
+                _log(progress, f"[stage2.5] Instance DB: {len(idb.characters)} chars, {len(result.wash_results)} scenes with entities")
             except Exception as exc:
                 _log(progress, f"[stage2.5] Washer unavailable ({exc.__class__.__name__})")
                 result.report.warnings.append(f"washer_unavailable:{exc.__class__.__name__}")
@@ -211,6 +214,7 @@ def run_pipeline(
             scenes=result.scenes,
             report=result.report,
             output_dir=output_dir,
+            wash_results=result.wash_results,
             global_characters=result.global_characters,
             global_location_assets=result.global_location_assets,
             global_visual_elements=result.global_visual_elements,

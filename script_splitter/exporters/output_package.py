@@ -12,6 +12,7 @@ def export_output_package(
     scenes: list[SceneRecord],
     report: ParseReport,
     output_dir: str | Path,
+    wash_results: dict[str, dict] | None = None,
     global_characters: list | None = None,
     global_location_assets: list | None = None,
     global_visual_elements: list | None = None,
@@ -45,6 +46,25 @@ def export_output_package(
             locs = ", ".join(str(l) for l in shot.spatial_path) if shot.spatial_path else "?"
             lines.append(f"- **{shot.shot_id}** [{locs} / {chars}]: {shot.content}")
         lines.append("")
+        # Wash results write-back
+        if wash_results and scene.scene_id in wash_results:
+            wr = wash_results[scene.scene_id]
+            lines.append("## RECOGNIZED ENTITIES")
+            if wr.get("location"):
+                loc = wr["location"]
+                lines.append(f"**Location:** {loc.get('primary_location_raw', '?')} (class: {loc['class_id']}, id: {loc['location_id']})")
+            chars = wr.get("characters", [])
+            if chars:
+                lines.append("**Characters:**")
+                for c in chars:
+                    sp = "🎤 " if c.get("speaking") else ""
+                    lines.append(f"- {sp}{c['name']} (id: {c['character_id']})")
+            ves = wr.get("visual_elements", [])
+            if ves:
+                lines.append("**Visual Elements:**")
+                for v in ves:
+                    lines.append(f"- {v['name']} ({v['type']}, id: {v['element_id']})")
+            lines.append("")
         lines.append("## ORIGINAL SCRIPT TEXT - DO NOT MODIFY")
         lines.append(scene.original_text)
         (out / "scenes" / f"{scene.scene_id}.md").write_text("\n".join(lines), encoding="utf-8")
