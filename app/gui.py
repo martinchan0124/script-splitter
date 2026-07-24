@@ -3,6 +3,9 @@ import tkinter as tk
 try:
     from app.rules_manager import RulesManager
     _HAS_RULES = True
+    from app.db_browser import InstanceDBBrowser
+    _HAS_DB_BROWSER = True
+
 except Exception:
     _HAS_RULES = False
 
@@ -152,6 +155,7 @@ class App:
         top = ttk.Frame(self.win, padding=(20, 16, 20, 0))
         top.pack(fill="x")
         ttk.Label(top, text="Script Splitter ◬", font=("Helvetica", 20, "bold")).pack(side="left")
+        ttk.Button(top, text="📖 DB", command=self.open_db).pack(side="right", padx=(4, 4))
         ttk.Button(top, text="📋 Rules", command=self.open_rules).pack(side="right", padx=(4, 4))
         ttk.Button(top, text="⚙", width=3, command=self.open_settings).pack(side="right")
         ttk.Label(top, text="Layout-aware screenplay parser", foreground="gray",
@@ -217,6 +221,20 @@ class App:
         self.selected_path = path
         self.file_label.config(text=f"📄  {os.path.basename(path)}", foreground="#333")
         self.run_btn.config(state="normal")
+
+    def open_db(self):
+        if _HAS_DB_BROWSER:
+            from tkinter import filedialog
+            p = filedialog.askopenfilename(title="Select instance_db.json",
+                filetypes=[("JSON", "*.json")],
+                initialdir=str(ROOT / "test"))
+            if p:
+                try:
+                    InstanceDBBrowser(self.win, p)
+                except Exception as e:
+                    messagebox.showerror("Error", str(e))
+        else:
+            messagebox.showerror("Error", "DB browser unavailable")
 
     def open_rules(self):
         if _HAS_RULES:
